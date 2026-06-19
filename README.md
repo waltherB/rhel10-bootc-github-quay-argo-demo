@@ -43,7 +43,7 @@ Create these GitHub repository secrets:
 Create these GitHub repository variables:
 
 - `QUAY_IMAGE=quay.io/waba/rhel10-bootc-demo`
-- `TARGET_PLATFORM=linux/arm64` for Mac M4 / UTM ARM demo, or `linux/amd64` for x86 demo
+- `TARGET_PLATFORM=linux/arm64` for Mac M4 / UTM ARM demo
 
 For GitHub-hosted runners, Linux runners are normally x86_64. For an ARM64 image that matches a Mac M4 / UTM ARM VM, use a self-hosted ARM64 runner or build locally on the Mac.
 

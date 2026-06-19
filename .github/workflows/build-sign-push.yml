@@ -23,7 +23,7 @@ env:
 
 jobs:
   build-sign-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm64
 
     steps:
       - name: Checkout
@@ -109,10 +109,9 @@ jobs:
           # If TARGET_PLATFORM is explicitly set to 'auto' or empty, detect host arch
           if [[ -z "${CLEAN_PLATFORM}" || "${CLEAN_PLATFORM}" == "auto" ]]; then
             case "$(uname -m)" in
-              x86_64) PLATFORM="linux/amd64" ;;
               aarch64) PLATFORM="linux/arm64" ;;
               armv7l|armv7) PLATFORM="linux/arm/v7" ;;
-              *) PLATFORM="linux/amd64" ;;  # fallback
+              *) PLATFORM="linux/arm64" ;;  # fallback
             esac
           else
             PLATFORM="${CLEAN_PLATFORM}"
