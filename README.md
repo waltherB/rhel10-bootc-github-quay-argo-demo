@@ -51,6 +51,16 @@ Create these GitHub repository variables:
 
 For GitHub-hosted runners, Linux runners are normally x86_64. For an ARM64 image that matches a Mac M4 / UTM ARM VM, use a self-hosted ARM64 runner or build locally on the Mac.
 
+### Tagging strategy
+
+| Event | Tags pushed to Quay |
+|---|---|
+| Push to `main` | `:dev` (updated on every build) |
+| Promote workflow | `:prod` (copied from `:dev` by digest) |
+| `git tag v1.0.0` | `:dev` + `:v1.0.0` (immutable release) |
+
+SHA traceability is preserved via the image digest Quay stores against each tag — no `dev-<sha>` tags needed.
+
 ## Argo CD note
 
 Argo CD is Kubernetes GitOps CD. It does not directly manage a non-Kubernetes host OS by itself. In this demo repo, Argo CD is used for the app/platform layer on MicroShift/Kubernetes, while OS lifecycle is handled by bootc.

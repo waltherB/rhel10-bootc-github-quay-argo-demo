@@ -43,9 +43,8 @@ Push commit to GitHub and show workflow:
 
 - build
 - smoke test
-- push to Quay
-- cosign sign
-- cosign verify
+- push `:dev` to Quay (only `:dev` on a normal push; `:v*` tags only on a git tag)
+- cosign sign + verify
 
 ## 6. Promote
 
@@ -107,7 +106,7 @@ vm-upgrade
 vm-status
 ```
 
-
+### 7f. What happened under the hood
 
 ```
 GitHub push

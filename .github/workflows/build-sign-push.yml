@@ -56,17 +56,18 @@ jobs:
 
           SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-12)"
 
+          # Only create a versioned tag for git tags (v*); plain pushes to main just update :dev
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION_TAG="${GITHUB_REF#refs/tags/}"
           else
-            VERSION_TAG="dev-${SHORT_SHA}"
+            VERSION_TAG=""
           fi
 
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
           echo "Computed SHORT_SHA=${SHORT_SHA}"
-          echo "Computed VERSION_TAG=${VERSION_TAG}"
+          echo "Computed VERSION_TAG=${VERSION_TAG:-none (dev only)}"
 
       - name: Validate image reference
         shell: bash
@@ -123,8 +124,8 @@ jobs:
             --platform "${PLATFORM}" \
             --build-arg RHSM_ACTIVATION_KEY="${{ secrets.RHSM_ACTIVATION_KEY }}" \
             --build-arg RHSM_ORG="${{ secrets.RHSM_ORG }}" \
-            -t "${CLEAN_IMAGE}:${VERSION_TAG}" \
             -t "${CLEAN_IMAGE}:dev" \
+            $([[ -n "${{ steps.meta.outputs.version_tag }}" ]] && echo "-t ${CLEAN_IMAGE}:${{ steps.meta.outputs.version_tag }}") \
             .
 
       - name: Smoke test image as container
@@ -160,8 +161,12 @@ jobs:
           CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
           VERSION_TAG="${{ steps.meta.outputs.version_tag }}"
 
-          podman push "${CLEAN_IMAGE}:${VERSION_TAG}"
           podman push "${CLEAN_IMAGE}:dev"
+
+          # Only push versioned tag when building from a git tag
+          if [[ -n "${VERSION_TAG}" ]]; then
+            podman push "${CLEAN_IMAGE}:${VERSION_TAG}"
+          fi
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -181,8 +186,12 @@ jobs:
           CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
           VERSION_TAG="${{ steps.meta.outputs.version_tag }}"
 
-          cosign sign "${CLEAN_IMAGE}:${VERSION_TAG}"
           cosign sign "${CLEAN_IMAGE}:dev"
+
+          # Only sign versioned tag when building from a git tag
+          if [[ -n "${VERSION_TAG}" ]]; then
+            cosign sign "${CLEAN_IMAGE}:${VERSION_TAG}"
+          fi
 
       - name: Verify signatures
         shell: bash
