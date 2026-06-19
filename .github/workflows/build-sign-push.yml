@@ -18,7 +18,8 @@ concurrency:
 
 env:
   IMAGE: ${{ vars.QUAY_IMAGE }}
-  TARGET_PLATFORM: ${{ vars.TARGET_PLATFORM || 'linux/amd64' }}
+  # Set TARGET_PLATFORM to 'auto' (detect runner arch) by default; override via repo variables if needed
+  TARGET_PLATFORM: ${{ vars.TARGET_PLATFORM || 'auto' }}
 
 jobs:
   build-sign-push:
@@ -121,6 +122,8 @@ jobs:
 
           podman build \
             --platform "${PLATFORM}" \
+            --build-arg RHSM_ACTIVATION_KEY="${{ secrets.RHSM_ACTIVATION_KEY }}" \
+            --build-arg RHSM_ORG="${{ secrets.RHSM_ORG }}" \
             -t "${CLEAN_IMAGE}:${VERSION_TAG}" \
             -t "${CLEAN_IMAGE}:dev" \
             .
@@ -177,4 +180,3 @@ jobs:
           cosign verify "${CLEAN_IMAGE}:dev" \
             --certificate-identity-regexp "https://github.com/.+" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-
