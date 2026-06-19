@@ -20,6 +20,8 @@ RUN set -eux; \
       curl \
       vim-enhanced \
       bash-completion \
+      selinux-policy-targeted \ 
+      policycoreutils \
     && dnf clean all; \
     # Unregister & remove entitlement files so credentials are not present in final image
     if subscription-manager identity >/dev/null 2>&1; then \
