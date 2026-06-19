@@ -2,6 +2,8 @@
 
 Demo repo for building, signing and deploying a RHEL 10 bootc / Image Mode image.
 
+For a full step-by-step walkthrough — local build, CI pipeline, VM provisioning, live OS update, and rollback — see the [demo script](docs/demo-script.md).
+
 Target setup:
 
 - MacBook Pro M4
