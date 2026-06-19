@@ -138,9 +138,19 @@ jobs:
           podman rm -f bootc-test 2>/dev/null || true
           podman run --rm -d -p 8080:80 --name bootc-test "${CLEAN_IMAGE}:dev"
 
-          curl -fsS http://127.0.0.1:8080 | head
-          podman exec bootc-test cat /etc/motd
+          # Wait for the container to be ready
+          sleep 5
 
+          # Add retry logic for curl
+          for i in {1..10}; do
+            if curl -fsS http://127.0.0.1:8080 | head; then
+              break
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 1
+          done
+
+          podman exec bootc-test cat /etc/motd
           podman stop bootc-test
 
       - name: Push tags to Quay
