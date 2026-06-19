@@ -2,8 +2,10 @@ name: build-sign-push-rhel10-bootc
 
 on:
   push:
-    branches: [ "main" ]
-    tags: [ "v*" ]
+    branches:
+      - main
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -49,47 +51,116 @@ jobs:
         id: meta
         shell: bash
         run: |
-          SHORT_SHA="${GITHUB_SHA::12}"
-          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-12)"
+
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             VERSION_TAG="${GITHUB_REF#refs/tags/}"
           else
             VERSION_TAG="dev-${SHORT_SHA}"
           fi
+
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
-      - name: Build RHEL bootc image
+          echo "Computed SHORT_SHA=${SHORT_SHA}"
+          echo "Computed VERSION_TAG=${VERSION_TAG}"
+
+      - name: Validate image reference
+        shell: bash
         run: |
+          set -euo pipefail
+
+          CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
+          CLEAN_PLATFORM="$(echo "${TARGET_PLATFORM}" | tr -d '\r\n' | xargs)"
+
+          echo "IMAGE=${CLEAN_IMAGE}"
+          echo "TARGET_PLATFORM=${CLEAN_PLATFORM}"
+          echo "VERSION_TAG=${{ steps.meta.outputs.version_tag }}"
+          echo "DEV_REF=${CLEAN_IMAGE}:dev"
+          echo "VERSION_REF=${CLEAN_IMAGE}:${{ steps.meta.outputs.version_tag }}"
+
+          if [[ -z "${CLEAN_IMAGE}" ]]; then
+            echo "ERROR: IMAGE is empty. Check GitHub variable QUAY_IMAGE."
+            exit 1
+          fi
+
+          if [[ "${CLEAN_IMAGE}" =~ [[:space:]] ]]; then
+            echo "ERROR: IMAGE contains whitespace: '${CLEAN_IMAGE}'"
+            exit 1
+          fi
+
+          if [[ "${CLEAN_IMAGE}" == *"@"* ]]; then
+            echo "ERROR: IMAGE contains @. Use quay.io/waba/bootc-guide, not quay.io/waba@atea.dk/..."
+            exit 1
+          fi
+
+      - name: Build RHEL bootc image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
+          CLEAN_PLATFORM="$(echo "${TARGET_PLATFORM}" | tr -d '\r\n' | xargs)"
+          VERSION_TAG="${{ steps.meta.outputs.version_tag }}"
+
           podman build \
-            --platform "${TARGET_PLATFORM}" \
-            -t "${IMAGE}:${{ steps.meta.outputs.version_tag }}" \
-            -t "${IMAGE}:dev" \
+            --platform "${CLEAN_PLATFORM}" \
+            -t "${CLEAN_IMAGE}:${VERSION_TAG}" \
+            -t "${CLEAN_IMAGE}:dev" \
             .
 
       - name: Smoke test image as container
+        shell: bash
         run: |
-          podman run --rm -d -p 8080:80 --name bootc-test "${IMAGE}:dev"
+          set -euo pipefail
+
+          CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
+
+          podman rm -f bootc-test 2>/dev/null || true
+          podman run --rm -d -p 8080:80 --name bootc-test "${CLEAN_IMAGE}:dev"
+
           curl -fsS http://127.0.0.1:8080 | head
           podman exec bootc-test cat /etc/motd
+
           podman stop bootc-test
 
       - name: Push tags to Quay
+        shell: bash
         run: |
-          podman push "${IMAGE}:${{ steps.meta.outputs.version_tag }}"
-          podman push "${IMAGE}:dev"
+          set -euo pipefail
+
+          CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
+          VERSION_TAG="${{ steps.meta.outputs.version_tag }}"
+
+          podman push "${CLEAN_IMAGE}:${VERSION_TAG}"
+          podman push "${CLEAN_IMAGE}:dev"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
 
       - name: Sign pushed images with keyless Cosign
+        shell: bash
         env:
           COSIGN_YES: "true"
         run: |
-          cosign sign "${IMAGE}:${{ steps.meta.outputs.version_tag }}"
-          cosign sign "${IMAGE}:dev"
+          set -euo pipefail
+
+          CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
+          VERSION_TAG="${{ steps.meta.outputs.version_tag }}"
+
+          cosign sign "${CLEAN_IMAGE}:${VERSION_TAG}"
+          cosign sign "${CLEAN_IMAGE}:dev"
 
       - name: Verify signatures
+        shell: bash
         run: |
-          cosign verify "${IMAGE}:dev" \
-            --certificate-identity-regexp 'https://github.com/.+' \
-            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          set -euo pipefail
+
+          CLEAN_IMAGE="$(echo "${IMAGE}" | tr -d '\r\n' | xargs)"
+
+          cosign verify "${CLEAN_IMAGE}:dev" \
+            --certificate-identity-regexp "https://github.com/.+" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+
