@@ -1,0 +1,8 @@
+[[customizations.user]]
+name = "demo"
+password = "redhat"
+groups = ["wheel"]
+
+[[customizations.filesystem]]
+mountpoint = "/"
+minsize = "30 GiB"

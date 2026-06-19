@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rhel10-demo-app
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rhel10-demo-app
+  template:
+    metadata:
+      labels:
+        app: rhel10-demo-app
+    spec:
+      containers:
+        - name: app
+          image: quay.io/waba/rhel10-bootc-demo:dev
+          ports:
+            - containerPort: 80

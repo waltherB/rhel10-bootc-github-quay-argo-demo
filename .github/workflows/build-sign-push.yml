@@ -1,0 +1,95 @@
+name: build-sign-push-rhel10-bootc
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ${{ vars.QUAY_IMAGE }}
+  TARGET_PLATFORM: ${{ vars.TARGET_PLATFORM || 'linux/amd64' }}
+
+jobs:
+  build-sign-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman skopeo jq
+
+      - name: Login to Red Hat Registry
+        run: |
+          echo "${{ secrets.RH_REGISTRY_PASSWORD }}" | \
+            podman login registry.redhat.io \
+              -u "${{ secrets.RH_REGISTRY_USERNAME }}" \
+              --password-stdin
+
+      - name: Login to Quay
+        run: |
+          echo "${{ secrets.QUAY_TOKEN }}" | \
+            podman login quay.io \
+              -u "${{ secrets.QUAY_USERNAME }}" \
+              --password-stdin
+
+      - name: Compute tags
+        id: meta
+        shell: bash
+        run: |
+          SHORT_SHA="${GITHUB_SHA::12}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            VERSION_TAG="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION_TAG="dev-${SHORT_SHA}"
+          fi
+          echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build RHEL bootc image
+        run: |
+          podman build \
+            --platform "${TARGET_PLATFORM}" \
+            -t "${IMAGE}:${{ steps.meta.outputs.version_tag }}" \
+            -t "${IMAGE}:dev" \
+            .
+
+      - name: Smoke test image as container
+        run: |
+          podman run --rm -d -p 8080:80 --name bootc-test "${IMAGE}:dev"
+          curl -fsS http://127.0.0.1:8080 | head
+          podman exec bootc-test cat /etc/motd
+          podman stop bootc-test
+
+      - name: Push tags to Quay
+        run: |
+          podman push "${IMAGE}:${{ steps.meta.outputs.version_tag }}"
+          podman push "${IMAGE}:dev"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign pushed images with keyless Cosign
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign sign "${IMAGE}:${{ steps.meta.outputs.version_tag }}"
+          cosign sign "${IMAGE}:dev"
+
+      - name: Verify signatures
+        run: |
+          cosign verify "${IMAGE}:dev" \
+            --certificate-identity-regexp 'https://github.com/.+' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
