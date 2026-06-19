@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-IMAGE="${IMAGE:-quay.io/waba/rhel10-bootc-demo:dev}"
+IMAGE="${IMAGE:-quay.io/waba/bootc-guide:dev}"
 
 podman rm -f bootc-test 2>/dev/null || true
 podman run --rm -d -p 8080:80 --name bootc-test "$IMAGE"

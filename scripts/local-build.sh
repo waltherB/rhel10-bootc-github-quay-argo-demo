@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-IMAGE="${IMAGE:-quay.io/waba/rhel10-bootc-demo:dev}"
+IMAGE="${IMAGE:-quay.io/waba/bootc-guide:dev}"
 PLATFORM="${TARGET_PLATFORM:-linux/arm64}"
 
 podman login registry.redhat.io

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-IMAGE="${IMAGE:-quay.io/waba/rhel10-bootc-demo:dev}"
+IMAGE="${IMAGE:-quay.io/waba/bootc-guide:dev}"
 
 # Requires: brew install cosign
 # For private Quay repositories, ensure you are logged in with podman login quay.io.
