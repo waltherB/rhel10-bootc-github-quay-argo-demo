@@ -39,6 +39,8 @@ Create these GitHub repository secrets:
 - `RH_REGISTRY_PASSWORD`
 - `QUAY_USERNAME`
 - `QUAY_TOKEN`
+- `RHSM_ORG`
+- `RHSM_ACTIVATION_KEY`
 
 Create these GitHub repository variables:
 
