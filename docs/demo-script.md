@@ -51,11 +51,75 @@ Push commit to GitHub and show workflow:
 
 Run `promote-rhel10-bootc-prod` workflow manually.
 
-## 7. VM update
+## 7. VM update – live demo of image-based OS update
+
+This section shows the full loop: change something visible → push → CI builds a new image → VM pulls and applies it.
+
+### 7a. Make a visible change
+
+Edit `files/motd` to bump the version so the update is easy to verify on the VM:
 
 ```bash
-sudo bootc switch --apply quay.io/waba/rhel10-bootc-demo:prod
+# on your Mac
+echo "RHEL 10 Image Mode Demo v2 – updated $(date +%F)" > files/motd
+git add files/motd
+git commit -m "chore: bump motd to v2 to demo live update"
+git push
 ```
+
+You can also change `app/index.html` if you want a visible change in the browser.
+
+### 7b. Watch the CI pipeline
+
+Go to **GitHub → Actions → build-sign-push-rhel10-bootc** and watch:
+
+1. Build the new arm64 image
+2. Smoke-test the container
+3. Push `:dev` tag to Quay
+4. Cosign sign + verify
+
+Once green, run the **promote-rhel10-bootc-prod** workflow manually to retag `:dev → :prod`.
+
+### 7c. Check what the VM is running now
+
+SSH into the VM (or open the UTM console):
+
+```bash
+# show current booted image digest, motd, and httpd
+vm-status
+```
+
+Note the image digest shown under `booted` — this is the old version.
+
+### 7d. Pull and stage the new image
+
+```bash
+# Pull new :prod image, stage it, then reboot
+vm-upgrade
+```
+
+`bootc upgrade` fetches the new OCI layers and writes them to the staging deployment. The running OS is **not touched** until reboot.
+
+### 7e. Verify after reboot
+
+```bash
+# new digest should differ from what you noted in 7c
+vm-status
+```
+
+
+
+```
+GitHub push
+  └── Actions: build → test → push quay.io/…:dev
+        └── promote workflow: skopeo copy :dev → :prod
+              └── VM: bootc upgrade pulls new :prod layers
+                    └── systemctl reboot → boots new deployment
+                          └── old deployment kept as rollback target
+```
+
+bootc uses OSTree under the hood: the new image is a new deployment, the previous one is retained automatically.
+
 
 ## 8. Rollback
 

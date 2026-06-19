@@ -30,6 +30,9 @@ RUN set -eux; \
 
 COPY app/index.html /var/www/html/index.html
 COPY files/motd /etc/motd
+COPY scripts/vm-status.sh /usr/local/bin/vm-status
+COPY scripts/vm-upgrade.sh /usr/local/bin/vm-upgrade
+RUN chmod +x /usr/local/bin/vm-status /usr/local/bin/vm-upgrade
 
 RUN systemctl enable httpd
 RUN bootc container lint
