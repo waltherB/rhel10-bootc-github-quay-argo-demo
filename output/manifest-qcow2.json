@@ -53,25 +53,25 @@
           "type": "org.osbuild.sfdisk",
           "options": {
             "label": "gpt",
-            "uuid": "d36a469e-fd86-47a5-990b-91317254bb5c",
+            "uuid": "abf512b9-9833-49e5-93df-e67e02047a0c",
             "partitions": [
               {
                 "size": 1026048,
                 "start": 2048,
                 "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-                "uuid": "f3bcbfb1-0db6-42d2-9e88-9daacb5dccd1"
+                "uuid": "7fae05b6-9fc9-4dd3-862d-0d9766dbf9fc"
               },
               {
                 "size": 2097152,
                 "start": 1028096,
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                "uuid": "71fe9cd0-45b5-4f86-a95b-d4fab3fe8b3e"
+                "uuid": "bd1a496f-615e-4b5e-8754-e14850da0347"
               },
               {
                 "size": 62916575,
                 "start": 3125248,
                 "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                "uuid": "c1fe7706-e650-49e7-969b-b7ef22cf35d8"
+                "uuid": "c67b466a-dc17-418b-8d55-6402c0d38071"
               }
             ]
           },
@@ -88,7 +88,7 @@
         {
           "type": "org.osbuild.mkfs.fat",
           "options": {
-            "volid": "F9F9676C",
+            "volid": "D092D0DB",
             "label": "EFI-SYSTEM"
           },
           "devices": {
@@ -106,7 +106,7 @@
         {
           "type": "org.osbuild.mkfs.xfs",
           "options": {
-            "uuid": "1d4ac878-ffdc-40ab-9494-08977c7ebd99",
+            "uuid": "3252543f-8f4f-4b39-9a80-f2ec2693d543",
             "label": "boot"
           },
           "devices": {
@@ -124,7 +124,7 @@
         {
           "type": "org.osbuild.mkfs.xfs",
           "options": {
-            "uuid": "cc777b50-a972-40bc-955b-497d26e0f992",
+            "uuid": "a19816b1-97db-495f-b194-58dc0018531e",
             "label": "root"
           },
           "devices": {
@@ -203,7 +203,7 @@
                 "DefaultDependencies": true
               },
               "Mount": {
-                "What": "/dev/disk/by-uuid/cc777b50-a972-40bc-955b-497d26e0f992",
+                "What": "/dev/disk/by-uuid/a19816b1-97db-495f-b194-58dc0018531e",
                 "Where": "/",
                 "Type": "xfs",
                 "Options": "ro"
@@ -276,7 +276,7 @@
                 "DefaultDependencies": true
               },
               "Mount": {
-                "What": "/dev/disk/by-uuid/F9F9-676C",
+                "What": "/dev/disk/by-uuid/D092-D0DB",
                 "Where": "/boot/efi",
                 "Type": "vfat",
                 "Options": "umask=0077,shortname=winnt"
@@ -349,7 +349,7 @@
                 "DefaultDependencies": true
               },
               "Mount": {
-                "What": "/dev/disk/by-uuid/1d4ac878-ffdc-40ab-9494-08977c7ebd99",
+                "What": "/dev/disk/by-uuid/3252543f-8f4f-4b39-9a80-f2ec2693d543",
                 "Where": "/boot",
                 "Type": "xfs",
                 "Options": "ro"
@@ -542,7 +542,7 @@
                 "groups": [
                   "wheel"
                 ],
-                "password": "$6$nJRNXoeTxB8DqAFX$Lwib9Nt1Du61f3DbAzbnMYL5rUPjHkimxCsRAPyuHPSK87rC59t7yYV8i8x.3y6xMMvcvr.uy8tK9EZOk/L0O1"
+                "password": "$6$NoEERcuWS5KhGmy9$r13rmztl.7XjRi6pHPBDZ.mn6VD47MI4L/cPlPxP/dm8jTjHNEaBmibA9rYd.fBATEj8WSJF18mxjEYVUClIG."
               }
             }
           },
